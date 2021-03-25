@@ -56,6 +56,7 @@ module Clash.Core.PartialEval.Monad
   , getInScope
   , withInScope
   , withInScopeList
+  , getAddr
     -- * Fresh Variable Generation
   , getUniqueId
   , getUniqueTyVar
@@ -361,6 +362,9 @@ withInScopeList vars = modifyLocalEnv go
  where
   go env@LocalEnv{lenvInScope=inScope} =
     env { lenvInScope = extendInScopeSetList inScope vars }
+
+getAddr :: Eval Int
+getAddr = genvAddr <$> getGlobalEnv
 
 getUniqueId :: OccName -> Type -> Eval Id
 getUniqueId = getUniqueVar mkUniqSystemId
