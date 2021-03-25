@@ -20,6 +20,7 @@ module Clash.Core.PartialEval.NormalForm
   , Args
   , Neutral(..)
   , Value(..)
+  , collectValueApps
   , mkValueTicks
   , stripValue
   , collectValueTicks
@@ -98,6 +99,17 @@ data Value
   | VTick     !Value !TickInfo
   | VThunk    !Term !LocalEnv
   deriving (Show)
+
+collectValueApps :: Value -> Maybe (Neutral Value, Args Value)
+collectValueApps (VNeutral n) = Just (go [] n)
+ where
+  go !args = \case
+    NeApp x y -> go (Left y : args) x
+    NeTyApp x ty -> go (Right ty : args) x
+    neu -> (neu, args)
+
+collectValueApps (VTick x _) = collectValueApps x
+collectValueApps _ = Nothing
 
 mkValueTicks :: Value -> [TickInfo] -> Value
 mkValueTicks = foldl VTick
