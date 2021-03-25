@@ -21,6 +21,7 @@ module Clash.GHC.PartialEval.Eval
   ) where
 
 import           Control.Monad (foldM)
+import           Control.Monad.Catch hiding (mask)
 import           Data.Bifunctor
 import           Data.Bitraversable
 import           Data.Either
@@ -746,8 +747,8 @@ apply val arg = do
             -- work free argument that doesn't change between calls.
             pure (mkValueTicks (VNeutral (NeLetrec [(j, arg)] inner)) ticks)
 
-    f ->
-      error ("apply: Cannot apply " <> show arg <> " to " <> show f)
+    _ ->
+      throwM (CannotApply lhs (Left arg))
 
 applyTy :: (HasCallStack) => Value -> Type -> Eval Value
 applyTy val ty = do
@@ -767,5 +768,4 @@ applyTy val ty = do
         inner <- withTyVar var argTy (eval x)
         pure (mkValueTicks inner ticks)
 
-    f ->
-      error ("applyTy: Cannot apply " <> show argTy <> " to " <> show f)
+    _ -> throwM (CannotApply lhs (Right argTy))
