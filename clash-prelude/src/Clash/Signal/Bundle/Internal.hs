@@ -1,7 +1,7 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module Clash.Signal.Bundle.Internal where
+module Clash.Signal.Bundle.Internal (deriveBundleTuples) where
 
 import           Control.Monad               (liftM)
 import           Clash.Annotations.Primitive (Primitive(InlinePrimitive))
