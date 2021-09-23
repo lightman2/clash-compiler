@@ -3,6 +3,7 @@
 -- preferred by the solver over other versions.
 packages:
   ./clash-ghc
+  ./clash-hedgehog
   ./clash-lib
   ./clash-prelude
   ./tests
@@ -25,6 +26,9 @@ tests: True
 package clash-ghc
   ghc-options: +RTS -qn4 -A128M -RTS -j4
   executable-dynamic: True
+
+package clash-hedgehog
+  flags: +debug
 
 package clash-prelude
   ghc-options: +RTS -qn4 -A128M -RTS -j4

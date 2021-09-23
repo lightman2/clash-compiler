@@ -21,6 +21,8 @@ cradle:
       config: { cradle: {none: }}
     - path: "./clash-ghc/src-bin-881"
       config: { cradle: {none: }}
+    - path: "./clash-hedgehog"
+      config: { cradle: {cabal: [{path: "./clash-hedgehog/src", component: "lib:clash-hedgehog"}]}}
     - path: "./clash-lib"
       config: { cradle: {cabal: [{path: "./clash-lib/src", component: "lib:clash-lib"}
                                 ,{path: "./clash-lib/test", component: "clash-lib:unittests"} ] } }
