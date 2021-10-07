@@ -4,10 +4,9 @@
 
 module Test.Tasty.Iverilog where
 
-import           Control.Monad             (forM_)
 import           Data.Coerce               (coerce)
 import qualified Data.Text                 as T
-import           System.Directory          (listDirectory, copyFile)
+import           System.Directory          (listDirectory)
 import           System.FilePath           ((</>))
 import           System.FilePath.Glob      (glob)
 
@@ -73,10 +72,7 @@ instance IsTest IVerilogSimTest where
   run optionSet IVerilogSimTest{..} progressCallback = do
     src <- ivsSourceDirectory
 
-    -- See Note [copy data files hack]
-    lists <- glob (src </> "*/memory.list")
-    forM_ lists $ \memFile ->
-      copyFile memFile (src </> "memory.list")
+    copyDataFilesHack src src
 
     let topExe = ivsTop <> ".exe"
     case ivsExpectFailure of

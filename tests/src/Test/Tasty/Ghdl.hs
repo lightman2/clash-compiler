@@ -5,14 +5,13 @@
 module Test.Tasty.Ghdl where
 
 import           Clash.Driver.Manifest     (Manifest(..), manifestFilename)
-import           Control.Monad             (foldM, forM_)
+import           Control.Monad             (foldM)
 import           Data.Char                 (toLower)
 import           Data.Coerce               (coerce)
 import qualified Data.List                 as List
 import qualified Data.Text                 as T
-import           System.Directory          (createDirectory, listDirectory, copyFile)
+import           System.Directory          (createDirectory, listDirectory)
 import           System.FilePath           ((</>), replaceFileName)
-import           System.FilePath.Glob      (glob)
 
 import           Test.Tasty.Common
 import           Test.Tasty.Program
@@ -123,10 +122,7 @@ instance IsTest GhdlSimTest where
     src <- gstSourceDirectory
     let workDir = src </> "work"
 
-    -- See Note [copy data files hack]
-    lists <- glob (src </> "*/memory.list")
-    forM_ lists $ \memFile ->
-      copyFile memFile (workDir </> "memory.list")
+    copyDataFilesHack src workDir
 
     case gstExpectFailure of
       Nothing -> run optionSet (program workDir gstTop) progressCallback

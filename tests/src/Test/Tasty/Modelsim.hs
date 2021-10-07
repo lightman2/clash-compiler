@@ -4,11 +4,9 @@
 
 module Test.Tasty.Modelsim where
 
-import           Control.Monad             (forM_)
 import           Data.Coerce               (coerce)
 import qualified Data.List                 as List
 import qualified Data.Text                 as T
-import           System.Directory          (copyFile)
 import           System.FilePath           ((</>))
 import           System.FilePath.Glob      (glob)
 
@@ -61,10 +59,7 @@ instance IsTest ModelsimSimTest where
   run optionSet ModelsimSimTest{..} progressCallback = do
     src <- msimSourceDirectory
 
-    -- See Note [copy data files hack]
-    lists <- glob (src </> "*/memory.list")
-    forM_ lists $ \memFile ->
-      copyFile memFile (src </> "memory.list")
+    copyDataFilesHack src src
 
     let args = ["-batch", "-do", doScript, msimTop]
     case msimExpectFailure of
