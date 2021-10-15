@@ -33,7 +33,7 @@ roundTripProperty = property $ do
   es <- forAll $ Gen.list (Range.singleton len)
                    $ Gen.integral_ $ Range.constant 0 (2 ^ width - 1)
   let (len0, runs, ends) = packAsNats width id es
-  es0 <- (flip const) (len0, width, es) evalNF $ unpackNats width len0 (L.toStrict runs) (L.toStrict ends)
+  es0 <- evalNF $ unpackNats width len0 (L.toStrict runs) (L.toStrict ends)
   diff (len, es) (==) (len0, es0)
 
 tests :: TestTree
@@ -53,14 +53,11 @@ packBVs
   -> (Int, L.ByteString, L.ByteString)
 packBVs care = packAsNats nI knownBVVal
  where
-  knownBVVal (BV mask val) =
-    case care of
-      Just (Bit 0 0) -> val .&. (mask `xor` fullMask)
-      Just (Bit 0 1) -> val .|. mask
-      _ -> if mask /= 0 then
-             err
-           else
-             val
+  knownBVVal (BV 0    val) = val
+  knownBVVal (BV mask val) = case care of
+                               Just (Bit 0 0) -> val .&. (mask `xor` fullMask)
+                               Just (Bit 0 1) -> val .|. mask
+                               _ -> err
   nI = natToNum @n @Int
   fullMask = (1 `shiftL` nI) - 1
 
