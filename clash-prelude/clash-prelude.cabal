@@ -392,6 +392,7 @@ test-suite unittests
       ghc-typelits-extra,
 
       base,
+      bytestring,
       deepseq,
       hedgehog      >= 1.0.3    && < 1.1,
       hint          >= 0.7      && < 0.10,
@@ -408,6 +409,7 @@ test-suite unittests
                  Clash.Tests.BitPack
                  Clash.Tests.BitVector
                  Clash.Tests.BlockRam
+                 Clash.Tests.BlockRam.Blob
                  Clash.Tests.Counter
                  Clash.Tests.DerivingDataRepr
                  Clash.Tests.DerivingDataReprTypes
