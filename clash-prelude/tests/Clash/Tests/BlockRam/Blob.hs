@@ -33,7 +33,8 @@ roundTripProperty = property $ do
   es <- forAll $ Gen.list (Range.singleton len)
                    $ Gen.integral_ $ Range.constant 0 (2 ^ width - 1)
   let (len0, runs, ends) = packAsNats width id es
-  es0 <- evalNF $ unpackNats width len0 (L.toStrict runs) (L.toStrict ends)
+      es0 = take 300 $
+              unpackNats width len0 (L.toStrict runs) (L.toStrict ends)
   diff (len, es) (==) (len0, es0)
 
 tests :: TestTree
@@ -105,46 +106,50 @@ unpackNats
   -> B.ByteString
   -> B.ByteString
   -> [Natural]
-unpackNats _ 0   = \_ _ -> []
-unpackNats n len = go 0 0 endCInit endACInit 0
+unpackNats _ 0 _ _ = []
+unpackNats n len runBs endBs
+  | n < 8     = ends
+  | otherwise = go (head ends) runL runBs (tail ends)
  where
   (runL, endL) = n `divMod` 8
-  endPerWord = 64 `div` endL
-  (endCInit, endACInit) | endL == 0   = (0, 8)
-                        | leader == 0 = (endPerWord, 0)
-                        | otherwise   = (leader, 0)
-   where
-    leader = len `mod` endPerWord
+  ends = if endL == 0 then
+           repeat 0
+         else
+           unpackEnds endL len $ unpackW64s endBs
 
-  go :: Natural -> Int -> Int -> Int -> Word64 -> B.ByteString
-     -> B.ByteString -> [Natural]
-  go val runC endC endAC endA runs ends
-    | endAC == 7
-      = let Just (endB, ends0) = B.uncons ends
-            endA0 = endA * 256 + fromIntegral endB
-            (endA1, valEnd) = endA0 `divMod` (2 ^ endL)
-            val0 = fromIntegral valEnd
-        in go val0 runC endC 8 endA1 runs ends0
-    | endAC < 7
-      = let Just (endB, ends0) = B.uncons ends
-            endA0 = endA * 256 + fromIntegral endB
-        in go val runC endC (endAC + 1) endA0 runs ends0
-    | runC < runL
-      = let Just (runB, runs0) = B.uncons runs
-            val0 = val * 256 + fromIntegral runB
-        in go val0 (runC + 1) endC endAC endA runs0 ends
-    | endC == 1
-      = if B.null ends then
-          [val]
-        else
-          let val0 = fromIntegral endA
-          in val : go val0 0 endPerWord 0 0 runs ends
-    | endL > 0
-      = let (endA0, valEnd) = endA `divMod` (2 ^ endL)
-            val0 = fromIntegral valEnd
-            endC0 = endC - 1
-        in val : go val0 0 endC0 endAC endA0 runs ends
-    | B.null runs
-      = [val]
-    | otherwise
-      = val : go 0 0 endC endAC endA runs ends
+  go val 0    runBs0 ~(end0:ends0) = val : go end0 runL runBs0 ends0
+  go _   _    runBs0 _             | B.null runBs0 = []
+  go val runC runBs0 ends0
+    = let Just (runB, runBs1) = B.uncons runBs0
+          val0 = val * 256 + fromIntegral runB
+      in go val0 (runC - 1) runBs1 ends0
+
+unpackW64s
+  :: B.ByteString
+  -> [Word64]
+unpackW64s = go 8 0
+ where
+  go :: Int -> Word64 -> B.ByteString -> [Word64]
+  go 8 _   endBs | B.null endBs = []
+  go 0 val endBs = val : go 8 0 endBs
+  go n val endBs = let Just (endB, endBs0) = B.uncons endBs
+                       val0 = val * 256 + fromIntegral endB
+                   in go (n - 1) val0 endBs0
+
+unpackEnds
+  :: Int
+  -> Int
+  -> [Word64]
+  -> [Natural]
+unpackEnds _    _   []     = []
+unpackEnds endL len (w:ws) = go endCInit w ws
+ where
+  endPerWord = 64 `div` endL
+  leader = len `mod` endPerWord
+  endCInit | leader == 0 = endPerWord
+           | otherwise   = leader
+
+  go 0 _    []       = []
+  go 0 _    (w0:ws0) = go endPerWord w0 ws0
+  go n endA ws0      = let (endA0, valEnd) = endA `divMod` (2 ^ endL)
+                       in fromIntegral valEnd : go (n-1) endA0 ws0
