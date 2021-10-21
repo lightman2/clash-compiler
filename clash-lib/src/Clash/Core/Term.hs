@@ -182,7 +182,26 @@ data Pat
   -- ^ Literal pattern
   | DefaultPat
   -- ^ Default pattern
-  deriving (Eq,Ord,Show,Generic,NFData,Hashable,Binary)
+  deriving (Show,Generic,NFData,Hashable,Binary)
+
+-- This is maybe grimy. We _know_ based on the DataPat how many variables there
+-- should be bound. So if we want alpha-equivalence then we only need to look
+-- at the unique of the data constructor.
+--
+instance Eq Pat where
+  DataPat x _ _ == DataPat y _ _ = x == y
+  LitPat x == LitPat y = x == y
+  DefaultPat == DefaultPat = True
+  _ == _ = False
+
+instance Ord Pat where
+  compare (DataPat x _ _) (DataPat y _ _) = compare x y
+  compare DataPat{} _ = LT
+  compare (LitPat x) (LitPat y) = compare x y
+  compare LitPat{} DataPat{} = GT
+  compare LitPat{} DefaultPat = LT
+  compare DefaultPat DefaultPat = EQ
+  compare DefaultPat _ = GT
 
 type Alt = (Pat,Term)
 
