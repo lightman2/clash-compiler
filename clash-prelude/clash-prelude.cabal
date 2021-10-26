@@ -203,12 +203,15 @@ Library
                       Clash.Clocks.Deriving
 
                       Clash.Explicit.BlockRam
+                      Clash.Explicit.BlockRam.Blob
                       Clash.Explicit.BlockRam.File
+                      Clash.Explicit.BlockRam.Internal
                       Clash.Explicit.DDR
                       Clash.Explicit.Mealy
                       Clash.Explicit.Moore
                       Clash.Explicit.RAM
                       Clash.Explicit.ROM
+                      Clash.Explicit.ROM.Blob
                       Clash.Explicit.ROM.File
                       Clash.Explicit.Prelude
                       Clash.Explicit.Prelude.Safe
@@ -320,6 +323,7 @@ Library
   Build-depends:      array                     >= 0.5.1.0 && < 0.6,
                       arrows                    >= 0.4     && < 0.5,
                       base                      >= 4.11    && < 5,
+                      base64-bytestring,
                       binary                    >= 0.8.5   && < 0.11,
                       bytestring                >= 0.10.8  && < 0.12,
                       constraints               >= 0.9     && < 1.0,
