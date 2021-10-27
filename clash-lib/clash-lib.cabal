@@ -253,6 +253,7 @@ Library
 
                       Clash.Primitives.DSL
                       Clash.Primitives.ROM.File
+                      Clash.Primitives.ROM
                       Clash.Primitives.Types
                       Clash.Primitives.Util
 

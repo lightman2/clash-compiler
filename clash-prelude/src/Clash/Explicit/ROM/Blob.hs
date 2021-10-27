@@ -25,7 +25,9 @@ import Data.Array.Base        (unsafeAt)
 import GHC.Stack              (HasCallStack, withFrozenCallStack)
 import GHC.TypeLits           (KnownNat)
 
-import Clash.Explicit.BlockRam.Blob (createMemBlob, MemBlob, unpackMemBlob)
+import Clash.Class.BitPack (pack)
+import Clash.Explicit.BlockRam.Blob (createMemBlob, unpackMemBlob)
+import Clash.Explicit.BlockRam.Internal (MemBlob(..))
 import Clash.Promoted.Nat (natToNum)
 import Clash.Signal.Internal
   (Clock (..), KnownDomain, Signal (..), Enable, fromEnable)
@@ -50,22 +52,23 @@ romBlob
   -> Signal dom (BitVector m)
   -- ^ The value of the ROM at address @rd@ from the previous clock cycle
 romBlob = \clk en content rd ->
-  withFrozenCallStack (romBlob# clk en content (fromEnum <$> rd))
+  withFrozenCallStack (romBlob# clk en (memBlobRuns content) (fromEnum <$> rd))
 {-# INLINE romBlob #-}
 
 -- | ROM primitive
 romBlob#
-  :: forall dom n m
+--   :: forall dom n m
+  :: forall dom m
    . ( KnownDomain dom
-     , KnownNat n
      , KnownNat m
      , HasCallStack
      )
   => Clock dom
   -- ^ 'Clock' to synchronize to
   -> Enable dom
-  -> MemBlob n m
+--   -> MemBlob n m
   -- ^ ROM content
+  -> String
   -> Signal dom Int
   -- ^ Read address @rd@
   -> Signal dom (BitVector m)
@@ -75,8 +78,8 @@ romBlob# !_ en content =
     (withFrozenCallStack (deepErrorX "rom: initial value undefined"))
     (fromEnable en)
  where
-  szI = natToNum @n @Int
-  arr = listArray (0,szI-1) $ unpackMemBlob content
+  szI = length content
+  arr = listArray (0,szI-1) $ map (fromIntegral . fromEnum) content
 
   go o (e :- es) rd@(~(r :- rs)) =
     let o1 = if e then safeAt r else o

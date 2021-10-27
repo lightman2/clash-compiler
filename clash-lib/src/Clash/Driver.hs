@@ -131,6 +131,7 @@ import qualified Clash.Primitives.GHC.Int         as P
 import qualified Clash.Primitives.GHC.Word        as P
 import qualified Clash.Primitives.Intel.ClockGen  as P
 import qualified Clash.Primitives.ROM.File        as P
+import qualified Clash.Primitives.ROM             as P
 import qualified Clash.Primitives.Verification    as P
 import           Clash.Primitives.Types
 import           Clash.Signal.Internal
@@ -547,6 +548,7 @@ knownTemplateFunctions =
     , ('P.altpllTF, P.altpllTF)
     , ('P.fromIntegerTF, P.fromIntegerTF)
     , ('P.romStringTF, P.romStringTF)
+    , ('P.romBlobTF, P.romBlobTF)
     ]
 
 -- | Compiles blackbox functions and parses blackbox templates.

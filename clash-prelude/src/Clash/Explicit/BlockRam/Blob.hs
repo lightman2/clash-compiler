@@ -11,6 +11,10 @@ Maintainer :  QBayLogic B.V. <devops@qbaylogic.com>
 -- {-# OPTIONS_GHC -fplugin=GHC.TypeLits.Normalise #-}
 -- {-# OPTIONS_GHC -fplugin=GHC.TypeLits.KnownNat.Solver #-}
 
+-- See: https://github.com/clash-lang/clash-compiler/commit/721fcfa9198925661cd836668705f817bddaae3c
+-- as to why we need this.
+{-# OPTIONS_GHC -fno-cpr-anal #-}
+
 {-# OPTIONS_HADDOCK show-extensions #-}
 
 module Clash.Explicit.BlockRam.Blob
@@ -50,8 +54,8 @@ createMemBlob name care es = sequence
   name0 = mkName name
   n = litT . numTyLit $ toInteger len
   m = litT . numTyLit $ natToInteger @m
-  runs = litE . stringL . L8.unpack $ B64L.encode runsB
-  ends = litE . stringL . L8.unpack $ B64L.encode endsB
+  runs = litE . stringL $ "runs" -- . L8.unpack $ B64L.encode runsB
+  ends = litE . stringL $ "ends" --  . L8.unpack $ B64L.encode endsB
   (len, runsB, endsB) = packBVs care es
 
 unpackMemBlob
