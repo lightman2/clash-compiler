@@ -80,6 +80,7 @@ __>>> L.tail $ sampleN 4 $ g systemClockGen enableGen (fromList [3..5])__
 
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE MagicHash #-}
 {-# LANGUAGE TemplateHaskell #-}
 
 {-# LANGUAGE Unsafe #-}
@@ -111,13 +112,16 @@ import Control.Monad.ST      (ST, runST)
 import Control.Monad.ST.Unsafe (unsafeInterleaveST, unsafeIOToST, unsafeSTToIO)
 import Data.Array.MArray     (newArray_)
 import Data.Bits             ((.&.), (.|.), shiftL, xor)
+import qualified Data.ByteString as B
+import qualified Data.ByteString.Char8 as B8
 import Data.Char             (digitToInt)
 import Data.Maybe            (isJust, listToMaybe)
 import GHC.Arr               (STArray, unsafeReadSTArray, unsafeWriteSTArray)
+import GHC.Exts              (Addr#)
 import GHC.Stack             (HasCallStack, withFrozenCallStack)
 import GHC.TypeLits          (KnownNat)
 import Language.Haskell.TH
-  (Dec, litE, litT, mkName, normalB, numTyLit, Q, sigD, stringL, valD, varP)
+  (Dec, litE, litT, mkName, normalB, numTyLit, Q, sigD, stringL, valD, varP, stringPrimL)
 import Numeric               (readInt)
 import System.IO
 
@@ -311,9 +315,9 @@ memFile care = foldr (\e -> showsBV $ pack e) ""
            go (n0 - 1) v0 $ '1' : s0
 
 data MemString n m = MemString
-  { memStringLength :: SNat n
-  , memStringWidth :: SNat m
-  , memStringContent :: String
+  { memStringLength :: !(SNat n)
+  , memStringWidth :: !(SNat m)
+  , memStringContent :: Addr#
   }
 
 createMemString
@@ -333,7 +337,7 @@ createMemString name care es = sequence
   name0 = mkName name
   n = litT . numTyLit . toInteger $ length es
   m = litT . numTyLit $ natToInteger @(BitSize a)
-  s = litE . stringL $ memFile care es
+  s = litE . stringPrimL . B.unpack . B8.pack $ memFile care es
 
 -- | blockRamFile primitive
 blockRamFile#

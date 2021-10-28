@@ -6,9 +6,8 @@ Maintainer :  QBayLogic B.V. <devops@qbaylogic.com>
 
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE MagicHash #-}
 {-# LANGUAGE RankNTypes #-}
-
-{-# LANGUAGE Trustworthy #-}
 
 {-# OPTIONS_HADDOCK show-extensions #-}
 
@@ -52,23 +51,22 @@ romBlob
   -> Signal dom (BitVector m)
   -- ^ The value of the ROM at address @rd@ from the previous clock cycle
 romBlob = \clk en content rd ->
-  withFrozenCallStack (romBlob# clk en (memBlobRuns content) (fromEnum <$> rd))
+  withFrozenCallStack (romBlob# clk en content (fromEnum <$> rd))
 {-# INLINE romBlob #-}
 
 -- | ROM primitive
 romBlob#
---   :: forall dom n m
-  :: forall dom m
+  :: forall dom n m
    . ( KnownDomain dom
+     , KnownNat n
      , KnownNat m
      , HasCallStack
      )
   => Clock dom
   -- ^ 'Clock' to synchronize to
   -> Enable dom
---   -> MemBlob n m
+  -> MemBlob n m
   -- ^ ROM content
-  -> String
   -> Signal dom Int
   -- ^ Read address @rd@
   -> Signal dom (BitVector m)
@@ -78,8 +76,8 @@ romBlob# !_ en content =
     (withFrozenCallStack (deepErrorX "rom: initial value undefined"))
     (fromEnable en)
  where
-  szI = length content
-  arr = listArray (0,szI-1) $ map (fromIntegral . fromEnum) content
+  szI = natToNum @n @Int
+  arr = listArray (0,szI-1) $ unpackMemBlob content
 
   go o (e :- es) rd@(~(r :- rs)) =
     let o1 = if e then safeAt r else o

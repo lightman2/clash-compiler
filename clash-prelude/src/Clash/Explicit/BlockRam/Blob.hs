@@ -23,14 +23,20 @@ module Clash.Explicit.BlockRam.Blob
   , unpackMemBlob
   ) where
 
+import qualified Data.ByteString as B
 import qualified Data.ByteString.Base64 as B64
 import qualified Data.ByteString.Base64.Lazy as B64L
 import qualified Data.ByteString.Char8 as B8
+import qualified Data.ByteString.Lazy as L
 import qualified Data.ByteString.Lazy.Char8 as L8
+import qualified Data.ByteString.Unsafe as B
+import GHC.Exts (Addr#)
 import GHC.Stack (HasCallStack) -- , withFrozenCallStack)
 import GHC.TypeLits (KnownNat)
 import Language.Haskell.TH
-  (Dec, litE, litT, mkName, normalB, numTyLit, Q, sigD, stringL, valD, varP)
+  (Dec, integerL, litE, litT, mkName, normalB, numTyLit, Q, sigD, stringPrimL,
+   valD, varP)
+import System.IO.Unsafe (unsafePerformIO)
 
 import Clash.Explicit.BlockRam.Internal (MemBlob(..), packBVs, unpackNats)
 import Clash.Promoted.Nat (natToInteger, natToNum, SNat(..))
@@ -48,22 +54,26 @@ createMemBlob
   -> Q [Dec]
 createMemBlob name care es = sequence
   [ sigD name0 [t| MemBlob $(n) $(m) |]
-  , valD (varP name0) (normalB [| MemBlob SNat SNat $(runs) $(ends) |]) []
+  , valD (varP name0) (normalB [| MemBlob SNat SNat $(runsLen) $(runs)
+                                  $(endsLen) $(ends) |]) []
   ]
  where
   name0 = mkName name
   n = litT . numTyLit $ toInteger len
   m = litT . numTyLit $ natToInteger @m
-  runs = litE . stringL $ "runs" -- . L8.unpack $ B64L.encode runsB
-  ends = litE . stringL $ "ends" --  . L8.unpack $ B64L.encode endsB
+  runsLen = litE . integerL . toInteger $ L.length runsB
+  runs = litE . stringPrimL $ L.unpack runsB
+  endsLen = litE . integerL . toInteger $ L.length endsB
+  ends = litE . stringPrimL $ L.unpack endsB
   (len, runsB, endsB) = packBVs care es
 
 unpackMemBlob
   :: forall n m
    . MemBlob n m
   -> [BitVector m]
-unpackMemBlob (MemBlob SNat SNat runs ends)
+unpackMemBlob (MemBlob SNat SNat runsLen runs endsLen ends)
   = map (BV 0) $
-      unpackNats (natToNum @m) (natToNum @n) (decode runs) (decode ends)
+      unpackNats (natToNum @m) (natToNum @n) runsB endsB
  where
-  decode = (\(Right bs) -> bs) . B64.decode . B8.pack
+  runsB = unsafePerformIO $ B.unsafePackAddressLen runsLen runs
+  endsB = unsafePerformIO $ B.unsafePackAddressLen endsLen ends

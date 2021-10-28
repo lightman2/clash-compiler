@@ -76,6 +76,8 @@ __>>> L.tail $ sampleN 4 $ g systemClockGen (fromList [3..5])__
 @
 -}
 
+{-# LANGUAGE MagicHash #-}
+
 {-# LANGUAGE FlexibleContexts #-}
 
 {-# LANGUAGE Unsafe #-}
@@ -99,9 +101,13 @@ where
 
 import Data.Array                   (listArray)
 import Data.Array.Base              (unsafeAt)
+import qualified Data.ByteString as B
+import qualified Data.ByteString.Char8 as B8
+import Data.ByteString.Unsafe       (unsafePackAddress)
+import GHC.Exts                     (Addr#)
 import GHC.TypeLits                 (KnownNat)
 import System.IO.Unsafe             (unsafePerformIO)
---
+
 import Clash.Explicit.BlockRam.File
   (initMem, memFile, createMemString, MemString(..))
 import Clash.Promoted.Nat           (SNat (..), pow2SNat, snatToNum)
@@ -260,7 +266,7 @@ romString#
   -- ^ Global enable
   -> SNat n
   -- ^ Size of the ROM
-  -> String
+  -> Addr#
   -- ^ The contents of the ROM
   -> Signal dom Int
   -- ^ Read address @rd@
@@ -270,7 +276,7 @@ romString# clk en sz contents rd =
   delay clk en (deepErrorX "First value of romString is undefined")
         (safeAt <$> rd)
  where
-  mem  = initMem0 contents
+  mem  = initMem0 . B8.unpack $ unsafePerformIO (unsafePackAddress  contents)
   arr  = listArray (0,szI-1) mem
   szI  = snatToNum sz
 

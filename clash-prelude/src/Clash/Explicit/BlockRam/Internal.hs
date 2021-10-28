@@ -1,3 +1,4 @@
+{-# LANGUAGE MagicHash #-}
 {-# LANGUAGE TypeApplications #-}
 
 -- {-# OPTIONS_GHC -fplugin=GHC.TypeLits.Extra.Solver #-}
@@ -15,6 +16,7 @@ import qualified Data.ByteString.Lazy as L
 -- import qualified Data.ByteString.Lazy.Char8 as L8
 import Data.ByteString.Builder (Builder, toLazyByteString, word8, word64BE)
 import Data.Word (Word64)
+import GHC.Exts (Addr#)
 import GHC.Stack (HasCallStack, withFrozenCallStack)
 import GHC.TypeLits (KnownNat)
 import Numeric.Natural (Natural)
@@ -25,8 +27,10 @@ import Clash.Sized.Internal.BitVector (Bit(..), BitVector(..))
 data MemBlob n m = MemBlob
   { memBlobLength :: !(SNat n)
   , memBlobWidth :: !(SNat m)
-  , memBlobRuns :: !String
-  , memBlobEnds :: !String
+  , memBlobRunsLen :: !Int
+  , memBlobRuns :: Addr#
+  , memBlobEndsLen :: !Int
+  , memBlobEnds :: Addr#
   }
 
 packBVs

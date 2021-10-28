@@ -25,8 +25,9 @@ romStringTemplate
   -> State s Doc
 romStringTemplate bbCtx = pure bbText
  where
-  (BlackBoxE "GHC.CString.unpackCString#" [] [] [] _ contentBBCtx _, _, _) =
-    bbInputs bbCtx !! 5
-  (Literal Nothing (StringLit content), _, _) = head $ bbInputs contentBBCtx
+  content = bbInputs bbCtx !! 5
+--   (BlackBoxE "GHC.CString.unpackCString#" [] [] [] _ contentBBCtx _, _, _) =
+--     bbInputs bbCtx !! 5
+--   (Literal Nothing (StringLit content), _, _) = head $ bbInputs contentBBCtx
 
-  bbText = fromString $ content
+  bbText = fromString $ show content

@@ -4,11 +4,12 @@
     , "type" :
 "rom# :: ( KnownDomain dom        ARG[0]
          , KnownNat n    --       ARG[1]
-         , Undefined a ) --       ARG[2]
-      => Clock dom       -- clk,  ARG[3]
-      -> Enable dom      -- en,   ARG[4]
-      -> MemBlob n m     -- init, ARG[5]
-      -> Signal dom Int  -- rd,   ARG[6]
+         , KnownNat n    --       ARG[2]
+         , HasCallStack) --       ARG[3]
+      => Clock dom       -- clk,  ARG[4]
+      -> Enable dom      -- en,   ARG[5]
+      -> MemBlob n m     -- init, ARG[6]
+      -> Signal dom Int  -- rd,   ARG[7]
       -> Signal dom a"
     , "template" :
 "-- rom begin
@@ -18,14 +19,14 @@
 begin
   ~SYM[2] <= ...;
 
-  ~SYM[3] <= to_integer(~VAR[rdI][6](31 downto 0))
+  ~SYM[3] <= to_integer(~VAR[rdI][7](31 downto 0))
   -- pragma translate_off
                 mod ~LIT[1]
   -- pragma translate_on
                 ;
-  ~GENSYM[romSync][6] : process (~ARG[3])
+  ~GENSYM[romSync][6] : process (~ARG[4])
   begin
-    if (~IF~ACTIVEEDGE[Rising][0]~THENrising_edge~ELSEfalling_edge~FI(~ARG[3])~IF ~ISACTIVEENABLE[4] ~THEN and ~ARG[4] ~ELSE ~FI) then~IF ~VIVADO ~THEN
+    if (~IF~ACTIVEEDGE[Rising][0]~THENrising_edge~ELSEfalling_edge~FI(~ARG[4])~IF ~ISACTIVEENABLE[5] ~THEN and ~ARG[5] ~ELSE ~FI) then~IF ~VIVADO ~THEN
       ~RESULT <= ~FROMBV[~SYM[2](~SYM[3])][~TYPO];~ELSE
       ~RESULT <= ~SYM[2](~SYM[3]);~FI
     end if;

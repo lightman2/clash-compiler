@@ -22,7 +22,7 @@ romBlobTF :: TemplateFunction
 romBlobTF =
   TemplateFunction used valid romBlobTemplate
  where
-  used = [5]
+  used = [6]
   valid = const True
 
 romBlobTemplate
@@ -31,6 +31,6 @@ romBlobTemplate
   -> State s Doc
 romBlobTemplate bbCtx = pure bbText
  where
-  blob = bbInputs bbCtx !! 5
+  blob = bbInputs bbCtx !! 6
   bbText = fromString $ show blob
   
