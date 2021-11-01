@@ -23,7 +23,7 @@ import qualified Data.Maybe as Maybe
 import GHC.Stack (HasCallStack)
 
 import Clash.Core.HasType
-import Clash.Core.Term (CoreContext(..), Term(..), collectArgs, mkLams)
+import Clash.Core.Term (Bind(..), CoreContext(..), Term(..), collectArgs, mkLams)
 import Clash.Core.TermInfo (isFun)
 import Clash.Core.Type (splitFunTy)
 import Clash.Core.Util (mkInternalVar)
@@ -63,15 +63,29 @@ etaExpansionTL (TransformContext is0 ctx) (Lam bndr e) = do
   e' <- etaExpansionTL ctx' e
   return $ Lam bndr e'
 
-etaExpansionTL (TransformContext is0 ctx) (Letrec xes e) = do
+etaExpansionTL (TransformContext is0 ctx) (Let (NonRec i x) e) = do
+  let ctx' = TransformContext (extendInScopeSet is0 i) (LetBody [i] : ctx)
+  e' <- etaExpansionTL ctx' e
+  case stripLambda e' of
+    (bs@(_:_),e2) -> do
+      let e3 = Let (NonRec i x) e2
+      changed (mkLams e3 bs)
+    _ -> return (Let (NonRec i x) e')
+ where
+  stripLambda (Lam bndr e0) =
+    let (bndrs,e1) = stripLambda e0
+     in (bndr:bndrs,e1)
+  stripLambda e' = ([],e')
+
+etaExpansionTL (TransformContext is0 ctx) (Let (Rec xes) e) = do
   let bndrs = map fst xes
       ctx' = TransformContext (extendInScopeSetList is0 bndrs) (LetBody bndrs : ctx)
   e' <- etaExpansionTL ctx' e
   case stripLambda e' of
     (bs@(_:_),e2) -> do
-      let e3 = Letrec xes e2
+      let e3 = Let (Rec xes) e2
       changed (mkLams e3 bs)
-    _ -> return (Letrec xes e')
+    _ -> return (Let (Rec xes) e')
   where
     stripLambda :: Term -> ([Id],Term)
     stripLambda (Lam bndr e0) =

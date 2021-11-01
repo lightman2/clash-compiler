@@ -10,6 +10,7 @@
 -}
 
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE TemplateHaskell #-}
 
 module Clash.Normalize.Transformations.XOptimize

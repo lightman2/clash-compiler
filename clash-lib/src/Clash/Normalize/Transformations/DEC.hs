@@ -27,6 +27,7 @@
 
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE RecursiveDo #-}
 {-# LANGUAGE TemplateHaskell #-}
 
